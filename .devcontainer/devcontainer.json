@@ -1,0 +1,58 @@
+// For format details, see https://aka.ms/devcontainer.json.
+// For config options, see:
+// https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
+{
+  // Human-readable name shown by VS Code for this development container.
+  "name": "ROS 2 Jazzy Dev Container",
+  // Build the development image from the repo's Dockerfile.
+  // "target": "dev" means we use the Development Image stage.
+  "build": {
+    "context": "..",
+    "dockerfile": "../docker/Dockerfile",
+    "target": "dev"
+  },
+  // The folder VS Code opens inside the container.
+  // This matches the standard ROS 2 colcon workspace layout.
+  "workspaceFolder": "/rover_ws",
+  // Mount the local repo into the container's workspace src directory.
+  // This means edits made in VS Code affect the real files on the host.
+  "workspaceMount": "source=${localWorkspaceFolder},target=/ros2_ws,type=bind,consistency=cached",
+  // Use the non-root user created in the Dockerfile.
+  // This avoids doing normal development as root.
+  "remoteUser": "ros",
+  // Environment variables available inside the container.
+  "containerEnv": {
+    // Match the VcXsrv/XLaunch display number.
+    // Our Windows X server is started on display 0, so ROS GUI tools use :0.0.
+    "DISPLAY": ":0.0",
+    // Prevent Qt-based ROS tools like rqt_graph and rviz from using X11 shared memory,
+    // which can cause issues across Windows + WSL2 + Docker.
+    "QT_X11_NO_MITSHM": "1",
+    // Isolate ROS 2 DDS discovery to this machine only.
+    "ROS_DOMAIN_ID": "42",
+    "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST"
+  },
+  // Extra Docker runtime arguments.
+  "runArgs": [
+    // Use the WSL host network directly.
+    // This simplifies ROS 2 DDS discovery between nodes running in and outside the container.
+    "--network=host",
+    // Expose the local X11 socket to the container.
+    // This allows GUI tools like xeyes, rqt_graph, rqt, and rviz to display through VcXsrv.
+    "--volume", "/tmp/.X11-unix:/tmp/.X11-unix:rw"
+  ],
+  // Placeholder command that runs after the container is first created.
+  // Keep this if you do not currently need extra setup, or replace it later with setup scripts.
+  "postCreateCommand": "true",
+  // Recommended VS Code extensions for ROS, C++, and Python development.
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-iot.vscode-ros",
+        "ms-vscode.cpptools",
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ]
+    }
+  }
+}

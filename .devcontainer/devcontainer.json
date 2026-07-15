@@ -16,7 +16,7 @@
   "workspaceFolder": "/rover_ws",
   // Mount the local repo into the container's workspace src directory.
   // This means edits made in VS Code affect the real files on the host.
-  "workspaceMount": "source=${localWorkspaceFolder},target=/ros2_ws,type=bind,consistency=cached",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/rover_ws,type=bind,consistency=cached",
   // Use the non-root user created in the Dockerfile.
   // This avoids doing normal development as root.
   "remoteUser": "ros",

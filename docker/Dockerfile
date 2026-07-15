@@ -49,6 +49,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt /tmp/requirements.txt
 RUN python3 -m pip install --break-system-packages --no-cache-dir -r /tmp/requirements.txt
 
+# Copy entrypoint file (sources the shell terminal)
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Create a non-root user for normal development.
 # This avoids editing/building everything as root inside the container.
 # The base image may already have a user/group at UID/GID 1000 (e.g. "ubuntu"),
@@ -83,7 +87,7 @@ RUN usermod -aG dialout,plugdev $USERNAME
 # Configure every new terminal for ROS 2 development.
 # This sources ROS 2 Jazzy, sources the workspace when it exists,
 # and wraps colcon build so a successful build is immediately sourced
-# in the current terminal.
+# in the current terminal. Needed for DEVCONTAINERS.
 RUN { \
         echo ""; \
         echo "# ROS 2 auto-setup"; \
@@ -110,5 +114,6 @@ RUN { \
 USER $USERNAME
 WORKDIR /rover_ws
 
-# Start an interactive shell by default.
+# Run entrypoint.sh first (sources the ROS 2 environment), then hand off to CMD. Sourcing for oneoff docker builds.
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/bin/bash"]

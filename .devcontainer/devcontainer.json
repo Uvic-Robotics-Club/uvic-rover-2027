@@ -22,9 +22,9 @@
   "remoteUser": "ros",
   // Environment variables available inside the container.
   "containerEnv": {
-    // Match the VcXsrv/XLaunch display number.
-    // Our Windows X server is started on display 0, so ROS GUI tools use :0.0.
-    "DISPLAY": ":0.0",
+    // VcXsrv is a native Windows app serving X11 over TCP, not a Unix socket,
+    // so point at the Windows host via Docker Desktop's DNS alias rather than :0.0.
+    "DISPLAY": "host.docker.internal:0.0",
     // Prevent Qt-based ROS tools like rqt_graph and rviz from using X11 shared memory,
     // which can cause issues across Windows + WSL2 + Docker.
     "QT_X11_NO_MITSHM": "1",

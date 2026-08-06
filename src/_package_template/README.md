@@ -1,13 +1,15 @@
 # _package_template/
 
 **This is not a real package — it won't build.** It exists purely as a
-reference. Copy whichever subfolders you actually need into your
-new package and delete the rest.
+reference.
 
-## Which folders does my package need?
+## Starting a new package
 
-- Every package needs: `package.xml`, and either `setup.py`+`setup.cfg`
-  (Python) or `CMakeLists.txt` (C++).
+Run `ros2 pkg create --build-type ament_python <pkg_name>` (or
+`ament_cmake` for C++) to scaffold a new package. Then, use the guide below to decide which additional folders (`/config`, `/launch`, `/udf`, etc.)
+
+## What additional folders do I need?
+
 - **Node code itself doesn't get its own folder.** It lives directly in the
   package's own module — `<pkg_name>/<pkg_name>/*.py` for Python or `src/`+`include/` for C++.
 - Has tunable parameters? → add `config/`

@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="ASY, ROBOTIC ARM, 2026, URDF">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-3.47228344066504E-18 4.86947285569104E-17 0.0598387302864992"
+        rpy="0 0 0" />
+      <mass
+        value="0.219744023655981" />
+      <inertia
+        ixx="0.000224264814079452"
+        ixy="-1.60873704444494E-20"
+        ixz="-4.40061735388592E-22"
+        iyy="0.000224264814079452"
+        iyz="-1.07287849901648E-20"
+        izz="0.00044509213804625" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Link1"
+    type="fixed">
+    <origin
+      xyz="0 0 0.0643"
+      rpy="3.1416 0 -1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="Link1" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="Link1.5">
+    <inertial>
+      <origin
+        xyz="-0.00137045819153649 0.000243205923260911 0.00908179430343051"
+        rpy="0 0 0" />
+      <mass
+        value="2.04153344279071" />
+      <inertia
+        ixx="0.00185141024448053"
+        ixy="-2.24326067005647E-05"
+        ixz="-7.46688369056669E-05"
+        iyy="0.00180221293594771"
+        iyz="6.5432528624706E-05"
+        izz="0.00165845300699879" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link1.5.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.529411764705882 0.549019607843137 0.549019607843137 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link1.5.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Link1"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="Link1.5" />
+    <axis
+      xyz="0 0 0" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="Link2">
+    <inertial>
+      <origin
+        xyz="0.119984962807491 0.00196698564974415 -0.0807668134071398"
+        rpy="0 0 0" />
+      <mass
+        value="1.19593165380782" />
+      <inertia
+        ixx="0.00413067759750746"
+        ixy="-0.00261165764365988"
+        ixz="0.00337440243144047"
+        iyy="0.00826955163319396"
+        iyz="0.00183171701294834"
+        izz="0.00736497664966822" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Link2"
+    type="continuous">
+    <origin
+      xyz="-0.00025883 0.04747 -0.0132"
+      rpy="1.5708 1.5284 0.0054525" />
+    <parent
+      link="Link1.5" />
+    <child
+      link="Link2" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="Link3">
+    <inertial>
+      <origin
+        xyz="-0.0379710474432482 -0.0198862697913886 0.138377079151387"
+        rpy="0 0 0" />
+      <mass
+        value="1.19091866800207" />
+      <inertia
+        ixx="0.000540586458062107"
+        ixy="-3.86176457173228E-06"
+        ixz="-1.13312709144839E-05"
+        iyy="0.000534522975621574"
+        iyz="2.0693004575048E-05"
+        izz="0.000624629356506218" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.909803921568627 0.443137254901961 0.0313725490196078 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Link3"
+    type="continuous">
+    <origin
+      xyz="0.27765 0.1603 0"
+      rpy="-3.1416 0 1.5284" />
+    <parent
+      link="Link2" />
+    <child
+      link="Link3" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="Link4">
+    <inertial>
+      <origin
+        xyz="-0.358695030970577 0.0976039561893992 0.0227609312659723"
+        rpy="0 0 0" />
+      <mass
+        value="1.17148593710724" />
+      <inertia
+        ixx="0.000425747227263761"
+        ixy="4.48370410909855E-05"
+        ixz="4.81477054638228E-05"
+        iyy="0.000492663024963805"
+        iyz="-3.45702243208819E-05"
+        izz="0.000492239085997097" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Link4"
+    type="continuous">
+    <origin
+      xyz="0.053502 0 -0.035471"
+      rpy="3.1416 1.5708 3.1416" />
+    <parent
+      link="Link3" />
+    <child
+      link="Link4" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="Link5">
+    <inertial>
+      <origin
+        xyz="0.0876527737114546 0.360268047298371 0.193345370773225"
+        rpy="0 0 0" />
+      <mass
+        value="1.07420203734998" />
+      <inertia
+        ixx="0.000367092742060492"
+        ixy="7.08073347737635E-06"
+        ixz="7.62906743613573E-06"
+        iyy="0.000406016294979546"
+        iyz="-1.55404397556042E-06"
+        izz="0.000382179593918468" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link5.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.529411764705882 0.549019607843137 0.549019607843137 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link5.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Link5"
+    type="fixed">
+    <origin
+      xyz="0 0 0.2615"
+      rpy="-3.1416 0 -1.9635" />
+    <parent
+      link="Link4" />
+    <child
+      link="Link5" />
+    <axis
+      xyz="0 0 0" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="End_effector">
+    <inertial>
+      <origin
+        xyz="-0.296004083488572 0.0573662511705206 0.489657740787579"
+        rpy="0 0 0" />
+      <mass
+        value="0.542794300765224" />
+      <inertia
+        ixx="0.000345054803083106"
+        ixy="-1.50014906300123E-06"
+        ixz="-5.02252398562351E-05"
+        iyy="0.000401560086034988"
+        iyz="-4.77187672077572E-06"
+        izz="0.000196546909880828" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/End_effector.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.250980392156863 0.250980392156863 0.250980392156863 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/End_effector.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="End_effector"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.1405"
+      rpy="0.53499 1.5708 1.7134" />
+    <parent
+      link="Link5" />
+    <child
+      link="End_effector" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+</robot>

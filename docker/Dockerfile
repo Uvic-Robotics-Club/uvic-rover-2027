@@ -6,6 +6,8 @@
 # Used for local development, including GUI tools like RViz/rqt.
 FROM osrf/ros:jazzy-desktop AS dev
 
+LABEL maintainer="UVic Robotics <uvic.robotics@gmail.com>"
+
 # Avoid interactive prompts during apt installs.
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -117,3 +119,49 @@ WORKDIR /rover_ws
 # Run entrypoint.sh first (sources the ROS 2 environment), then hand off to CMD. Sourcing for oneoff docker builds.
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/bin/bash"]
+
+#########################################################
+# CI/CD Image
+#########################################################
+
+# Keep CI independent from the desktop development image.
+FROM osrf/ros:jazzy-ros-base AS ci
+
+LABEL maintainer="UVic Robotics <uvic.robotics@gmail.com>"
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Install the ROS 2 build and test toolchain for both C++ and Python packages.
+# GUI and interactive development tools remain in the dev stage above.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    python3-colcon-common-extensions \
+    python3-pip \
+    python3-rosdep \
+    python3-pytest \
+    python3-pytest-cov \
+    ros-jazzy-ament-cmake-gtest \
+    ros-jazzy-ament-cmake-pytest \
+    ros-jazzy-launch-testing \
+    ros-jazzy-launch-testing-ament-cmake \
+    ros-jazzy-launch-testing-ros \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /rover_ws
+COPY requirements.txt /tmp/requirements.txt
+RUN python3 -m pip install --break-system-packages --no-cache-dir -r /tmp/requirements.txt
+
+COPY src ./src
+
+# Keep the image buildable while the workspace is still being scaffolded.
+RUN if find src -name package.xml -print -quit | grep -q .; then \
+        rosdep update --rosdistro jazzy; \
+        rosdep install --from-paths src --ignore-src --rosdistro jazzy -r -y; \
+        colcon build --event-handlers console_direct+; \
+        colcon test --event-handlers console_direct+; \
+        colcon test-result --verbose; \
+    fi
+
+CMD ["bash"]
+

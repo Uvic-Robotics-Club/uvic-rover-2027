@@ -125,7 +125,7 @@ CMD ["/bin/bash"]
 #########################################################
 
 # Keep CI independent from the desktop development image.
-FROM osrf/ros:jazzy-ros-base AS ci
+FROM ros:jazzy-ros-base AS ci
 
 LABEL maintainer="UVic Robotics <uvic.robotics@gmail.com>"
 

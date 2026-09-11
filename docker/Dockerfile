@@ -97,8 +97,15 @@ RUN { \
         echo "  source /opt/ros/jazzy/setup.bash"; \
         echo "fi"; \
         echo ""; \
+        echo "export QT_X11_NO_MITSHM=1"; \
+        echo ""; \
         echo "if [ -f /rover_ws/install/setup.bash ]; then"; \
         echo "  source /rover_ws/install/setup.bash"; \
+        echo "fi"; \
+        echo ""; \
+        echo "# Install any missing ROS dependencies (once per container session)"; \
+        echo "if [ -d /rover_ws/src ] && [ ! -f /tmp/.rosdep_done ]; then"; \
+        echo "  sudo apt-get update -qq && rosdep update && rosdep install --from-paths /rover_ws/src --ignore-src -r -y && touch /tmp/.rosdep_done"; \
         echo "fi"; \
         echo ""; \
         echo "# Wrapper: after colcon build succeeds, source the workspace in this terminal"; \

@@ -3,7 +3,16 @@
      Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
      For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
 <robot
-  name="ASY, ROBOTIC ARM, 2026, URDF">
+  name="rover_arm">
+  
+  <link name="world"/>
+
+  <joint name="world_to_base" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="3.1416 0 0"/>
+  </joint>
+
   <link
     name="base_link">
     <inertial>
@@ -26,7 +35,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/base_link.STL" />
+          filename="package://rover_arm/meshes/base_link.STL" />
       </geometry>
       <material
         name="">
@@ -40,23 +49,10 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/base_link.STL" />
+          filename="package://rover_arm/meshes/base_link.STL" />
       </geometry>
     </collision>
   </link>
-  <joint
-    name="Link1"
-    type="fixed">
-    <origin
-      xyz="0 0 0.0643"
-      rpy="3.1416 0 -1.5708" />
-    <parent
-      link="base_link" />
-    <child
-      link="Link1" />
-    <axis
-      xyz="0 0 0" />
-  </joint>
   <link
     name="Link1.5">
     <inertial>
@@ -79,7 +75,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link1.5.STL" />
+          filename="package://rover_arm/meshes/Link1.5.STL" />
       </geometry>
       <material
         name="">
@@ -93,7 +89,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link1.5.STL" />
+          filename="package://rover_arm/meshes/Link1.5.STL" />
       </geometry>
     </collision>
   </link>
@@ -137,7 +133,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link2.STL" />
+          filename="package://rover_arm/meshes/Link2.STL" />
       </geometry>
       <material
         name="">
@@ -151,7 +147,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link2.STL" />
+          filename="package://rover_arm/meshes/Link2.STL" />
       </geometry>
     </collision>
   </link>
@@ -190,7 +186,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link3.STL" />
+          filename="package://rover_arm/meshes/Link3.STL" />
       </geometry>
       <material
         name="">
@@ -204,7 +200,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link3.STL" />
+          filename="package://rover_arm/meshes/Link3.STL" />
       </geometry>
     </collision>
   </link>
@@ -243,7 +239,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link4.STL" />
+          filename="package://rover_arm/meshes/Link4.STL" />
       </geometry>
       <material
         name="">
@@ -257,7 +253,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link4.STL" />
+          filename="package://rover_arm/meshes/Link4.STL" />
       </geometry>
     </collision>
   </link>
@@ -296,7 +292,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link5.STL" />
+          filename="package://rover_arm/meshes/Link5.STL" />
       </geometry>
       <material
         name="">
@@ -310,7 +306,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/Link5.STL" />
+          filename="package://rover_arm/meshes/Link5.STL" />
       </geometry>
     </collision>
   </link>
@@ -354,7 +350,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/End_effector.STL" />
+          filename="package://rover_arm/meshes/End_effector.STL" />
       </geometry>
       <material
         name="">
@@ -368,7 +364,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://ASY, ROBOTIC ARM, 2026, URDF/meshes/End_effector.STL" />
+          filename="package://rover_arm/meshes/End_effector.STL" />
       </geometry>
     </collision>
   </link>

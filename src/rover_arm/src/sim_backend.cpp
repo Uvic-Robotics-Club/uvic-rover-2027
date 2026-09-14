@@ -75,7 +75,7 @@ namespace rover_arm
 
         // All zeros for now
         // determined through simulation testing
-        std::vector<double> home_positions = {0.0, 0.0, 0.0, 0.0, 0.0};
+        std::vector<double> home_positions = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         set_all_joints(home_positions);
     }
 

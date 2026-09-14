@@ -117,6 +117,7 @@ RUN { \
         echo "  fi"; \
         echo "  return \$status"; \
         echo "}"; \
+        echo "export COLCON_DEFAULTS_FILE=/rover_ws/colcon_defaults.yaml"; \
     } >> /home/$USERNAME/.bashrc
 
 # Switch to the non-root development user and create the workspace.
@@ -161,11 +162,11 @@ RUN python3 -m pip install --break-system-packages --no-cache-dir -r /tmp/requir
 
 COPY src ./src
 
-# Keep the image buildable while the workspace is still being scaffolded.
+# Install dependencies then run tests
 RUN if find src -name package.xml -print -quit | grep -q .; then \
         rosdep update --rosdistro jazzy; \
         rosdep install --from-paths src --ignore-src --rosdistro jazzy -r -y; \
-        colcon build --event-handlers console_direct+; \
+        colcon build --cmake-args -DBUILD_TESTING=ON --event-handlers console_direct+; \
         colcon test --event-handlers console_direct+; \
         colcon test-result --verbose; \
     fi

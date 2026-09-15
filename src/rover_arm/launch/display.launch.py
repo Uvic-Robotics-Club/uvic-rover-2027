@@ -41,9 +41,10 @@ def generate_launch_description():
         name='arm_control_node',
         parameters=[{
             'backend': LaunchConfiguration('backend'),
-            'publish_rate_hz': 20.0
+            'publish_rate_hz': 20.0,
+            'robot_description': robot_description,  # ADD THIS
         }],
-        output='screen'  # print RCLCPP_INFO/WARN/ERROR to terminal
+        output='screen'
     )
 
     # RViz2 — visualises the robot model and TF frames

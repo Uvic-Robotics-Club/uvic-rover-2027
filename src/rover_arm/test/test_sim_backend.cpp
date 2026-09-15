@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
+#include <thread>
 
 #include "sim_backend.hpp"
 #include "arm_hal.hpp"
@@ -22,6 +23,20 @@ protected:
     {
         backend_.reset();
         node_.reset();
+    }
+
+    void spin_until_done(double timeout_s = 5.0)
+    {
+        auto start = node_->now();
+        while ((node_->now() - start).seconds() < timeout_s)
+        {
+            rclcpp::spin_some(node_);
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+            // Exit early once all joints have reached their targets
+            auto fb = backend_->get_feedback();
+            if (backend_->is_motion_complete()) break;  // needs a new method (see below)
+        }
     }
 
     rclcpp::Node::SharedPtr node_;
@@ -52,8 +67,10 @@ TEST_F(SimBackendTest, SetJointCommand_UpdatesSingleJoint)
     constexpr double TARGET = 1.23;
     backend_->set_joint_command(rover_arm::ArmHAL::JOINT_SHOULDER, TARGET);
 
-    sensor_msgs::msg::JointState feedback = backend_->get_feedback();
+    spin_until_done();
 
+    sensor_msgs::msg::JointState feedback = backend_->get_feedback();
+    
     // The commanded joint should have changed
     EXPECT_DOUBLE_EQ(feedback.position[rover_arm::ArmHAL::JOINT_SHOULDER], TARGET);
 
@@ -86,6 +103,8 @@ TEST_F(SimBackendTest, SetAllJoints_UpdatesAllPositions)
     ASSERT_EQ(static_cast<int>(commands.size()), rover_arm::ArmHAL::NUM_JOINTS);
 
     backend_->set_all_joints(commands);
+
+    spin_until_done();
 
     sensor_msgs::msg::JointState feedback = backend_->get_feedback();
 
@@ -135,15 +154,17 @@ TEST_F(SimBackendTest, GetFeedback_ReturnsCorrectPositions)
 {
     backend_->set_joint_command(rover_arm::ArmHAL::JOINT_TURRET,     0.10);
     backend_->set_joint_command(rover_arm::ArmHAL::JOINT_ELBOW,      0.30);
-    backend_->set_joint_command(rover_arm::ArmHAL::JOINT_WRIST_ROLL, 0.50);
+    backend_->set_joint_command(rover_arm::ArmHAL::JOINT_WRIST_PITCH, 0.50);
+
+    spin_until_done();
 
     sensor_msgs::msg::JointState feedback = backend_->get_feedback();
 
     EXPECT_DOUBLE_EQ(feedback.position[rover_arm::ArmHAL::JOINT_TURRET],     0.10);
     EXPECT_DOUBLE_EQ(feedback.position[rover_arm::ArmHAL::JOINT_SHOULDER],   0.00);
     EXPECT_DOUBLE_EQ(feedback.position[rover_arm::ArmHAL::JOINT_ELBOW],      0.30);
-    EXPECT_DOUBLE_EQ(feedback.position[rover_arm::ArmHAL::JOINT_WRIST],      0.00);
-    EXPECT_DOUBLE_EQ(feedback.position[rover_arm::ArmHAL::JOINT_WRIST_ROLL], 0.50);
+    EXPECT_DOUBLE_EQ(feedback.position[rover_arm::ArmHAL::JOINT_WRIST_ROLL],      0.00);
+    EXPECT_DOUBLE_EQ(feedback.position[rover_arm::ArmHAL::JOINT_WRIST_PITCH], 0.50);
     EXPECT_DOUBLE_EQ(feedback.position[rover_arm::ArmHAL::JOINT_HAND],       0.00);
 }
 
@@ -154,6 +175,8 @@ TEST_F(SimBackendTest, GetFeedback_VelocityAndEffortAreZero)
 {
     // Command something so the backend is not trivially untouched
     backend_->set_all_joints({1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
+
+    spin_until_done();
 
     sensor_msgs::msg::JointState feedback = backend_->get_feedback();
 
@@ -187,7 +210,11 @@ TEST_F(SimBackendTest, Home_ResetsAllJointsToZero)
     // Move all joints away from zero first
     backend_->set_all_joints({1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
 
+    spin_until_done();
+
     backend_->home();
+
+    spin_until_done();
 
     sensor_msgs::msg::JointState feedback = backend_->get_feedback();
 

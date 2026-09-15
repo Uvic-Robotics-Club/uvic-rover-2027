@@ -26,6 +26,7 @@ namespace rover_arm
             // NOT YET IMPLEMENTED - ALL METHODS THROW UNTIL CAN BRIDGE IS READY
             void set_joint_command(int joint_id, double value) override;
             void set_all_joints(const std::vector<double> & values) override;
+            void move_joint_relative(int joint_id, double delta) override;
             sensor_msgs::msg::JointState get_feedback() override;
             bool is_healthy() override;
             void home() override;

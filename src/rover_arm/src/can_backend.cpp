@@ -23,6 +23,11 @@ namespace rover_arm
     {
         throw std::runtime_error("CANBackend::set_all_joints — NOT YET IMPLEMENTED");
     }
+
+    void CANBackend::move_joint_relative(int /*joint_id*/, double /*delta*/)
+    {
+        throw std::runtime_error("CANBackend::move_joint_relative — NOT YET IMPLEMENTED");
+    }    
     
     sensor_msgs::msg::JointState CANBackend::get_feedback()
     {

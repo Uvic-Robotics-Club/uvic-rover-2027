@@ -16,13 +16,13 @@ namespace rover_arm
 
             // Joint indices, use these constants instead of raw numbers
             // to make code more readable and maintainable
-            static constexpr int JOINT_TURRET    = 0;
-            static constexpr int JOINT_SHOULDER  = 1;
-            static constexpr int JOINT_ELBOW     = 2;
-            static constexpr int JOINT_WRIST     = 3;
+            static constexpr int JOINT_TURRET      = 0;
+            static constexpr int JOINT_SHOULDER    = 1;
+            static constexpr int JOINT_ELBOW       = 2;
+            static constexpr int JOINT_WRIST_PITCH  = 3;
             static constexpr int JOINT_WRIST_ROLL = 4;
-            static constexpr int JOINT_HAND      = 5;
-            static constexpr int NUM_JOINTS      = 6;
+            static constexpr int JOINT_HAND        = 5;
+            static constexpr int NUM_JOINTS        = 6;
 
             // Joint names matching the URDF link names
             // Used when publishing JointState messages
@@ -47,6 +47,10 @@ namespace rover_arm
 
             // Set all joint commands at once. Vector must be exact number of joints.
             virtual void set_all_joints(const std::vector<double>& values) = 0;
+
+            // Move a single joint by a relative delta from its current position.
+            // Each backend determines "current position" from its own source of truth
+            virtual void move_joint_relative(int joint_id, double delta) = 0;
 
             // Get the current feedback from the arm (joint positions, velocities, etc.)
             virtual sensor_msgs::msg::JointState get_feedback() = 0;

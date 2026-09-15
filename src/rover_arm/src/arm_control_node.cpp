@@ -85,6 +85,12 @@ namespace rover_arm
                     10,
                     std::bind(&ArmControlNode::on_cmd_joint, this, std::placeholders::_1)
                 );
+
+                cmd_joint_relative_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
+                    "/arm/cmd_joint_relative",
+                    10,
+                    std::bind(&ArmControlNode::on_cmd_joint_relative, this, std::placeholders::_1)
+                );
                 
                 // ================================
                 // Feedback timer
@@ -159,6 +165,38 @@ namespace rover_arm
                 }
             }
 
+            void on_cmd_joint_relative(const sensor_msgs::msg::JointState::SharedPtr msg)
+            {
+                if (msg->name.empty() || msg->position.empty())
+                {
+                    RCLCPP_WARN(get_logger(), "Received empty cmd_joint_relative message, ignoring.");
+                    return;
+                }
+
+                if (msg->name.size() != msg->position.size())
+                {
+                    RCLCPP_WARN(get_logger(), "cmd_joint_relative name/position size mismatch, ignoring.");
+                    return;
+                }
+
+                for (size_t i = 0; i < msg->name.size(); ++i)
+                {
+                    int joint_id = get_joint_id_by_name(msg->name[i]);
+                    if (joint_id < 0)
+                    {
+                        RCLCPP_WARN(get_logger(), "Unknown joint name '%s', skipping", msg->name[i].c_str());
+                        continue;
+                    }
+
+                    try
+                    {
+                        hal_->move_joint_relative(joint_id, msg->position[i]);  // position field holds the delta
+                    } catch (const std::exception & e) {
+                        RCLCPP_ERROR(get_logger(), "HAL error on joint '%s': %s", msg->name[i].c_str(), e.what());
+                    }
+                }
+            }
+
             // ================================
             // Timer callback: publish feedback at fixed rate
             // ================================
@@ -213,6 +251,7 @@ namespace rover_arm
             rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr health_pub_;
             rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr cmd_joint_sub_;
+            rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr cmd_joint_relative_sub_;
             rclcpp::TimerBase::SharedPtr feedback_timer_;
      };
 } // namespace rover_arm

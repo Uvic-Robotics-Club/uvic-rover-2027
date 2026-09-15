@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(rover_arm)
 
 # Enable strict warnings for C++
@@ -14,6 +16,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(tinyxml2_vendor REQUIRED)
+find_package(TinyXML2 REQUIRED)
 
 #=====================================
 # Include directories
@@ -29,13 +33,17 @@ include_directories(include)
 add_library(arm_hal SHARED
   src/sim_backend.cpp
   src/can_backend.cpp
+  src/joint_limits.cpp
 )
 
-# Link the HAL library against ROS2 dependencies
+# Link the HAL library against ROS2 and XML dependencies
 ament_target_dependencies(arm_hal
   rclcpp
   sensor_msgs
   std_msgs
+)
+target_link_libraries(arm_hal
+    tinyxml2
 )
 
 #=====================================

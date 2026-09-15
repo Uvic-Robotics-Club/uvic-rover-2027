@@ -22,9 +22,6 @@
   "remoteUser": "ros",
   // Environment variables available inside the container.
   "containerEnv": {
-    // VcXsrv is a native Windows app serving X11 over TCP, not a Unix socket,
-    // so point at the Windows host via Docker Desktop's DNS alias rather than :0.0.
-    "DISPLAY": "host.docker.internal:0.0",
     // Prevent Qt-based ROS tools like rqt_graph and rviz from using X11 shared memory,
     // which can cause issues across Windows + WSL2 + Docker.
     "QT_X11_NO_MITSHM": "1",
@@ -34,12 +31,8 @@
   },
   // Extra Docker runtime arguments.
   "runArgs": [
-    // Use the WSL host network directly.
-    // This simplifies ROS 2 DDS discovery between nodes running in and outside the container.
     "--network=host",
-    // Expose the local X11 socket to the container.
-    // This allows GUI tools like xeyes, rqt_graph, rqt, and rviz to display through VcXsrv.
-    "--volume", "/tmp/.X11-unix:/tmp/.X11-unix:rw"
+    "--env-file", "${localWorkspaceFolder}/.devcontainer/.env"
   ],
   // Placeholder command that runs after the container is first created.
   // Keep this if you do not currently need extra setup, or replace it later with setup scripts.

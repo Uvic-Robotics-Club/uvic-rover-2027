@@ -1,0 +1,3 @@
+build:
+  cmake-args:
+    - -DBUILD_TESTING=ON

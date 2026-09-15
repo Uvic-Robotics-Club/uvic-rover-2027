@@ -3,6 +3,10 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <thread>
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <fstream>
+#include <sstream>
+
 #include "sim_backend.hpp"
 #include "arm_hal.hpp"
 
@@ -16,6 +20,7 @@ protected:
     void SetUp() override
     {
         node_ = std::make_shared<rclcpp::Node>("sim_backend_test_node");
+        node_->declare_parameter<std::string>("robot_description", load_real_urdf());
         backend_ = std::make_unique<rover_arm::SimBackend>(node_.get());
     }
 
@@ -41,10 +46,29 @@ protected:
 
     rclcpp::Node::SharedPtr node_;
     std::unique_ptr<rover_arm::SimBackend> backend_;
+
+private:
+    std::string load_real_urdf()
+    {
+        std::string pkg_share = ament_index_cpp::get_package_share_directory("rover_arm");
+        std::string urdf_path = pkg_share + "/urdf/rover_arm.urdf";
+
+        std::ifstream file(urdf_path);
+        if (!file.is_open())
+        {
+            ADD_FAILURE() << "Could not open URDF at: " << urdf_path
+                          << " — did the package install correctly?";
+            return "";
+        }
+
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        return buffer.str();
+    }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. InitialisesAllJointsToZero
+// InitialisesAllJointsToZero
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(SimBackendTest, InitialisesAllJointsToZero)
 {
@@ -60,7 +84,7 @@ TEST_F(SimBackendTest, InitialisesAllJointsToZero)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. SetJointCommand_UpdatesSingleJoint
+// SetJointCommand_UpdatesSingleJoint
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(SimBackendTest, SetJointCommand_UpdatesSingleJoint)
 {
@@ -84,7 +108,7 @@ TEST_F(SimBackendTest, SetJointCommand_UpdatesSingleJoint)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. SetJointCommand_OutOfRange_Throws
+// SetJointCommand_OutOfRange_Throws
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(SimBackendTest, SetJointCommand_OutOfRange_Throws)
 {
@@ -95,7 +119,7 @@ TEST_F(SimBackendTest, SetJointCommand_OutOfRange_Throws)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. SetAllJoints_UpdatesAllPositions
+// SetAllJoints_UpdatesAllPositions
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(SimBackendTest, SetAllJoints_UpdatesAllPositions)
 {
@@ -116,7 +140,7 @@ TEST_F(SimBackendTest, SetAllJoints_UpdatesAllPositions)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. SetAllJoints_WrongSize_Throws
+// SetAllJoints_WrongSize_Throws
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(SimBackendTest, SetAllJoints_WrongSize_Throws)
 {
@@ -132,7 +156,81 @@ TEST_F(SimBackendTest, SetAllJoints_WrongSize_Throws)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. GetFeedback_ReturnsCorrectJointNames
+// MoveJointRelative_AddsToCurrentPosition
+// ─────────────────────────────────────────────────────────────────────────────
+TEST_F(SimBackendTest, MoveJointRelative_AddsToCurrentPosition)
+{
+    backend_->set_joint_command(rover_arm::ArmHAL::JOINT_SHOULDER, 0.5);
+    spin_until_done();
+
+    backend_->move_joint_relative(rover_arm::ArmHAL::JOINT_SHOULDER, 0.2);
+    spin_until_done();
+
+    sensor_msgs::msg::JointState feedback = backend_->get_feedback();
+    EXPECT_NEAR(feedback.position[rover_arm::ArmHAL::JOINT_SHOULDER], 0.7, 1e-6);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MoveJointRelative_StacksMultipleMoves
+// ─────────────────────────────────────────────────────────────────────────────
+TEST_F(SimBackendTest, MoveJointRelative_StacksMultipleMoves)
+{
+    backend_->move_joint_relative(rover_arm::ArmHAL::JOINT_TURRET, 0.5);
+    spin_until_done();
+    backend_->move_joint_relative(rover_arm::ArmHAL::JOINT_TURRET, 0.5);
+    spin_until_done();
+    backend_->move_joint_relative(rover_arm::ArmHAL::JOINT_TURRET, -0.3);
+    spin_until_done();
+
+    sensor_msgs::msg::JointState feedback = backend_->get_feedback();
+    EXPECT_NEAR(feedback.position[rover_arm::ArmHAL::JOINT_TURRET], 0.7, 1e-6);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MoveJointRelative_OutOfRange_Throws
+// ─────────────────────────────────────────────────────────────────────────────
+TEST_F(SimBackendTest, MoveJointRelative_OutOfRange_Throws)
+{
+    EXPECT_THROW(backend_->move_joint_relative(-1, 0.1), std::out_of_range);
+    EXPECT_THROW(
+        backend_->move_joint_relative(rover_arm::ArmHAL::NUM_JOINTS, 0.1),
+        std::out_of_range);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MoveJointRelative_ClampsAtUpperLimit
+// ─────────────────────────────────────────────────────────────────────────────
+TEST_F(SimBackendTest, MoveJointRelative_ClampsAtUpperLimit)
+{
+    // shoulder_joint limit is [-1.5708, 1.5708] per URDF
+    backend_->set_joint_command(rover_arm::ArmHAL::JOINT_SHOULDER, 1.5);
+    spin_until_done();
+
+    // This delta would push past the upper limit — should clamp, not throw
+    backend_->move_joint_relative(rover_arm::ArmHAL::JOINT_SHOULDER, 1.0);
+    spin_until_done();
+
+    sensor_msgs::msg::JointState feedback = backend_->get_feedback();
+    EXPECT_NEAR(feedback.position[rover_arm::ArmHAL::JOINT_SHOULDER], 1.5708, 1e-3);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MoveJointRelative_ClampsAtLowerLimit
+// ─────────────────────────────────────────────────────────────────────────────
+TEST_F(SimBackendTest, MoveJointRelative_ClampsAtLowerLimit)
+{
+    backend_->set_joint_command(rover_arm::ArmHAL::JOINT_SHOULDER, -1.5);
+    spin_until_done();
+
+    backend_->move_joint_relative(rover_arm::ArmHAL::JOINT_SHOULDER, -1.0);
+    spin_until_done();
+
+    sensor_msgs::msg::JointState feedback = backend_->get_feedback();
+    EXPECT_NEAR(feedback.position[rover_arm::ArmHAL::JOINT_SHOULDER], -1.5708, 1e-3);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GetFeedback_ReturnsCorrectJointNames
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(SimBackendTest, GetFeedback_ReturnsCorrectJointNames)
 {
@@ -148,7 +246,7 @@ TEST_F(SimBackendTest, GetFeedback_ReturnsCorrectJointNames)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 7. GetFeedback_ReturnsCorrectPositions
+// GetFeedback_ReturnsCorrectPositions
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(SimBackendTest, GetFeedback_ReturnsCorrectPositions)
 {
@@ -169,7 +267,7 @@ TEST_F(SimBackendTest, GetFeedback_ReturnsCorrectPositions)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 8. GetFeedback_VelocityAndEffortAreZero
+// GetFeedback_VelocityAndEffortAreZero
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(SimBackendTest, GetFeedback_VelocityAndEffortAreZero)
 {
@@ -191,7 +289,7 @@ TEST_F(SimBackendTest, GetFeedback_VelocityAndEffortAreZero)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 9. IsHealthy_AlwaysTrue
+// IsHealthy_AlwaysTrue
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(SimBackendTest, IsHealthy_AlwaysTrue)
 {
@@ -203,7 +301,7 @@ TEST_F(SimBackendTest, IsHealthy_AlwaysTrue)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 10. Home_ResetsAllJointsToZero
+// Home_ResetsAllJointsToZero
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(SimBackendTest, Home_ResetsAllJointsToZero)
 {

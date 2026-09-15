@@ -47,6 +47,7 @@ def print_help():
     print("Input format: <joint_index> <degrees>  (relative move)")
     print("Commands:")
     print("  home      move all joints to home position")
+    print("  status    show current joint positions")
     print("  help      show this message")
     print("  quit      exit")
     print("\nJoint index map:")
@@ -74,7 +75,32 @@ class JointCommandCLI(Node):
             10
         )
 
+        self.last_feedback = None
+        self.subscription = self.create_subscription(
+            JointState,
+            '/arm/joint_states',
+            self._on_joint_states,
+            10
+        )
+
         self.get_logger().info("Joint command CLI ready — publishing relative deltas to /arm/cmd_joint_relative")
+
+    def _on_joint_states(self, msg: JointState):
+        self.last_feedback = msg
+
+    def print_status(self):
+        """Print current joint positions in degrees."""
+        # Give the subscription a moment to receive a fresh message
+        rclpy.spin_once(self, timeout_sec=0.2)
+
+        if self.last_feedback is None:
+            print("  No feedback received yet.")
+            return
+
+        print("\n--- Current Joint Positions ---")
+        for name, pos_rad in zip(self.last_feedback.name, self.last_feedback.position):
+            print(f"  {name:20s} {math.degrees(pos_rad):7.1f}°  ({pos_rad:.4f} rad)")
+        print()
 
     def send_command(self, joint_index: int, degrees: float):
         """Publish a relative delta — backend adds this to its own current position."""
@@ -127,6 +153,10 @@ def main():
 
             if raw == "home":
                 node.send_home()
+                continue
+
+            if raw == "status":
+                node.print_status()
                 continue
 
             parts = raw.split()

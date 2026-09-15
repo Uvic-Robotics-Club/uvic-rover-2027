@@ -18,6 +18,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(tinyxml2_vendor REQUIRED)
 find_package(TinyXML2 REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 
 #=====================================
 # Include directories
@@ -41,6 +42,7 @@ ament_target_dependencies(arm_hal
   rclcpp
   sensor_msgs
   std_msgs
+  ament_index_cpp
 )
 target_link_libraries(arm_hal
     tinyxml2

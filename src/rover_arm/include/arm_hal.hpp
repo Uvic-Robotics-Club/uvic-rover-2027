@@ -46,7 +46,16 @@ namespace rover_arm
             virtual void set_joint_command(int joint_id, double value) = 0;
 
             // Set all joint commands at once. Vector must be exact number of joints.
-            virtual void set_all_joints(const std::vector<double>& values) = 0;
+            virtual void set_all_joints(const std::vector<double>& values)
+            {
+                if (static_cast<int>(values.size()) != NUM_JOINTS)
+                    throw std::invalid_argument(
+                        "Expected " + std::to_string(NUM_JOINTS) +
+                        " joint values, got " + std::to_string(values.size()));
+
+                for (int i = 0; i < NUM_JOINTS; ++i)
+                    set_joint_command(i, values[i]);
+            }
 
             // Move a single joint by a relative delta from its current position.
             // Each backend determines "current position" from its own source of truth

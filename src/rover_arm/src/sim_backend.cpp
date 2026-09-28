@@ -105,17 +105,6 @@ namespace rover_arm
         tj.active        = (std::abs(value - joint_positions_[joint_id]) > 1e-6);
     }
 
-    void SimBackend::set_all_joints(const std::vector<double>& values)
-    {
-        if (static_cast<int>(values.size()) != ArmHAL::NUM_JOINTS)
-            throw std::invalid_argument(
-                "Expected " + std::to_string(ArmHAL::NUM_JOINTS) +
-                " joint values, got " + std::to_string(values.size()));
-
-        for (int i = 0; i < ArmHAL::NUM_JOINTS; ++i)
-            set_joint_command(i, values[i]);
-    }
-
     void SimBackend::move_joint_relative(int joint_id, double delta)
     {
         if (joint_id < 0 || joint_id >= ArmHAL::NUM_JOINTS)

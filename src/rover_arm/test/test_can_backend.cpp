@@ -28,7 +28,7 @@ protected:
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. SetJointCommand_Throws
+// SetJointCommand_Throws
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(CANBackendTest, SetJointCommand_Throws)
 {
@@ -38,7 +38,7 @@ TEST_F(CANBackendTest, SetJointCommand_Throws)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. SetAllJoints_Throws
+// SetAllJoints_Throws
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(CANBackendTest, SetAllJoints_Throws)
 {
@@ -47,7 +47,7 @@ TEST_F(CANBackendTest, SetAllJoints_Throws)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. GetFeedback_Throws
+// GetFeedback_Throws
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(CANBackendTest, GetFeedback_Throws)
 {
@@ -55,7 +55,7 @@ TEST_F(CANBackendTest, GetFeedback_Throws)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. IsHealthy_ReturnsFalse
+// IsHealthy_ReturnsFalse
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(CANBackendTest, IsHealthy_ReturnsFalse)
 {
@@ -63,7 +63,7 @@ TEST_F(CANBackendTest, IsHealthy_ReturnsFalse)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. Home_Throws
+// Home_Throws
 // ─────────────────────────────────────────────────────────────────────────────
 TEST_F(CANBackendTest, Home_Throws)
 {

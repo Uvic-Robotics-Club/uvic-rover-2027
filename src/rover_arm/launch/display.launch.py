@@ -30,7 +30,7 @@ def generate_launch_description():
         executable='robot_state_publisher',
         name='robot_state_publisher',
         parameters=[{'robot_description': robot_description}],
-        remappings=[('/joint_states', '/arm/joint_states')]  # this is critical
+        remappings=[('/joint_states', '/arm/joint_states')]
     )
 
     # arm_control_node — subscribes to /arm/cmd_joint, drives the HAL,
@@ -42,7 +42,7 @@ def generate_launch_description():
         parameters=[{
             'backend': LaunchConfiguration('backend'),
             'publish_rate_hz': 20.0,
-            'robot_description': robot_description,  # ADD THIS
+            'robot_description': robot_description,
         }],
         output='screen'
     )

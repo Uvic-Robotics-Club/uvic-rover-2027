@@ -169,6 +169,7 @@ RUN if find src -name package.xml -print -quit | grep -q .; then \
         rosdep install --from-paths src --ignore-src --rosdistro jazzy -r -y \
             --skip-keys "rviz2 rviz_common rviz_default_plugins"; \
         colcon build --cmake-args -DBUILD_TESTING=ON --event-handlers console_direct+; \
+        . install/setup.sh; \
         colcon test --event-handlers console_direct+; \
         colcon test-result --verbose; \
     fi

@@ -97,8 +97,15 @@ RUN { \
         echo "  source /opt/ros/jazzy/setup.bash"; \
         echo "fi"; \
         echo ""; \
+        echo "export QT_X11_NO_MITSHM=1"; \
+        echo ""; \
         echo "if [ -f /rover_ws/install/setup.bash ]; then"; \
         echo "  source /rover_ws/install/setup.bash"; \
+        echo "fi"; \
+        echo ""; \
+        echo "# Install any missing ROS dependencies (once per container session)"; \
+        echo "if [ -d /rover_ws/src ] && [ ! -f /tmp/.rosdep_done ]; then"; \
+        echo "  sudo apt-get update -qq && rosdep update && rosdep install --from-paths /rover_ws/src --ignore-src -r -y && touch /tmp/.rosdep_done"; \
         echo "fi"; \
         echo ""; \
         echo "# Wrapper: after colcon build succeeds, source the workspace in this terminal"; \
@@ -110,6 +117,7 @@ RUN { \
         echo "  fi"; \
         echo "  return \$status"; \
         echo "}"; \
+        echo "export COLCON_DEFAULTS_FILE=/rover_ws/colcon_defaults.yaml"; \
     } >> /home/$USERNAME/.bashrc
 
 # Switch to the non-root development user and create the workspace.
@@ -154,11 +162,13 @@ RUN python3 -m pip install --break-system-packages --no-cache-dir -r /tmp/requir
 
 COPY src ./src
 
-# Keep the image buildable while the workspace is still being scaffolded.
+# Install dependencies then run tests
 RUN if find src -name package.xml -print -quit | grep -q .; then \
+        . /opt/ros/jazzy/setup.sh; \
         rosdep update --rosdistro jazzy; \
-        rosdep install --from-paths src --ignore-src --rosdistro jazzy -r -y; \
-        colcon build --event-handlers console_direct+; \
+        rosdep install --from-paths src --ignore-src --rosdistro jazzy -r -y \
+            --skip-keys "rviz2 rviz_common rviz_default_plugins"; \
+        colcon build --cmake-args -DBUILD_TESTING=ON --event-handlers console_direct+; \
         colcon test --event-handlers console_direct+; \
         colcon test-result --verbose; \
     fi

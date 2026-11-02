@@ -2,4 +2,4 @@
 
 This is the UVic Robotics Software Repository for CIRC 2027.
 
-For details on Repo, go to the wiki.
+For details on Repo, go to the [wiki](https://github.com/Uvic-Robotics-Club/uvic-rover-2027/wiki).

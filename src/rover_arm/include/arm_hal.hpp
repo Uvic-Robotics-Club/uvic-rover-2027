@@ -19,8 +19,10 @@ namespace rover_arm
             static constexpr int JOINT_TURRET      = 0;
             static constexpr int JOINT_SHOULDER    = 1;
             static constexpr int JOINT_ELBOW       = 2;
-            static constexpr int JOINT_WRIST_PITCH  = 3;
-            static constexpr int JOINT_WRIST_ROLL = 4;
+            // Order MUST match the URDF chain order (base -> tip): IKSolver
+            // returns joints in chain order and they are sent to the HAL by index.
+            static constexpr int JOINT_WRIST_ROLL  = 3;
+            static constexpr int JOINT_WRIST_PITCH = 4;
             static constexpr int JOINT_HAND        = 5;
             static constexpr int NUM_JOINTS        = 6;
 
@@ -30,8 +32,8 @@ namespace rover_arm
                 "turret_joint", 
                 "shoulder_joint",
                 "elbow_joint",
-                "wrist_pitch_joint",
                 "wrist_roll_joint",
+                "wrist_pitch_joint",
                 "hand_joint"
             };
 

@@ -45,6 +45,8 @@ RUN apt-get update && apt-get install -y \
     mesa-utils \
     libgl1 \
     python3-colcon-common-extensions \
+    ros-jazzy-kdl-parser \
+    ros-jazzy-orocos-kdl-vendor \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies used by ROS Python nodes.

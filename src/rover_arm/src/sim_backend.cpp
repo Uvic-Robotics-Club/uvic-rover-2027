@@ -79,7 +79,7 @@ namespace rover_arm
         }
     }
 
-    void SimBackend::set_joint_command(int joint_id, double value)
+    void SimBackend::set_joint_command(int joint_id, double position)
     {
         if (joint_id < 0 || joint_id >= ArmHAL::NUM_JOINTS)
             throw std::out_of_range("joint_id " + std::to_string(joint_id) + " is out of range");
@@ -88,21 +88,38 @@ namespace rover_arm
         if (limits_.count(ArmHAL::JOINT_NAMES[joint_id]))
         {
             const auto & lim = limits_[ArmHAL::JOINT_NAMES[joint_id]];
-            if (value < lim.min || value > lim.max)
+            if (position < lim.min || position > lim.max)
             {
                 RCLCPP_WARN(node_->get_logger(),
                     "Joint %s command %.4f clamped to [%.4f, %.4f]",
-                    ArmHAL::JOINT_NAMES[joint_id].c_str(), value, lim.min, lim.max);
-                value = std::clamp(value, lim.min, lim.max);
+                    ArmHAL::JOINT_NAMES[joint_id].c_str(), position, lim.min, lim.max);
+                position = std::clamp(position, lim.min, lim.max);
             }
         }
 
-        JointTraj & tj   = traj_[joint_id];
-        tj.start_pos     = joint_positions_[joint_id];
-        tj.target_pos    = value;
-        tj.duration_s    = DEFAULT_DURATION;
-        tj.elapsed_s     = 0.0;
-        tj.active        = (std::abs(value - joint_positions_[joint_id]) > 1e-6);
+        auto & t = traj_[joint_id];
+
+        if (t.active)
+        {
+            // Mid-motion update — retarget without resetting
+            // This mimics hardware controller behavior where new targets
+            // blend into ongoing motion rather than restarting
+            t.start_pos  = joint_positions_[joint_id];  // current actual position
+            t.target_pos = position;
+            t.elapsed_s  = 0.0;
+            // Keep duration proportional to remaining distance
+            double dist = std::abs(position - t.start_pos);
+            t.duration_s = std::max(0.1, dist / 1.0);  // 1 rad/s max speed
+        } else
+        {
+            JointTraj & tj = traj_[joint_id];
+            tj.start_pos   = joint_positions_[joint_id];
+            tj.target_pos  = position;
+            tj.elapsed_s   = 0.0;
+            double dist    = std::abs(position - tj.start_pos);
+            tj.duration_s  = std::max(0.1, dist / 1.0);  // 1 rad/s max speed
+            tj.active      = (dist > 1e-6);
+        }
     }
 
     void SimBackend::move_joint_relative(int joint_id, double delta)

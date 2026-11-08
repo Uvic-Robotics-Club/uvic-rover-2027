@@ -1,0 +1,11 @@
+# rover_arm configuration
+# home.joints: home pose in radians, keyed by URDF joint name.
+#   Written by the 'calibrate' command in terminal_input_node.py.
+home:
+  joints:
+    turret_joint: 0.20944
+    shoulder_joint: 0.174533
+    elbow_joint: 0.872665
+    wrist_roll_joint: -0.785398
+    wrist_pitch_joint: -0.523599
+    hand_joint: 0.0

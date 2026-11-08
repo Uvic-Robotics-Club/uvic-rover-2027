@@ -15,10 +15,18 @@
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>tinyxml2_vendor</depend>
+  <depend>kdl_parser</depend>
+  <depend>orocos_kdl_vendor</depend>
+  <depend>geometry_msgs</depend>
 
   <!-- Visualization runtime dependencies -->
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rviz2</exec_depend>
+
+  <!-- terminal_input_node.py runtime dependencies -->
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
 
   <!-- Test dependencies -->
   <test_depend>ament_cmake_gtest</test_depend>

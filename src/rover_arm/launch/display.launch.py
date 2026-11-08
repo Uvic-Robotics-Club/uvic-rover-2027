@@ -44,6 +44,7 @@ def generate_launch_description():
             'publish_rate_hz': 20.0,
             'robot_description': robot_description,
         }],
+        # arguments=['--ros-args', '--log-level', 'debug'],
         output='screen'
     )
 

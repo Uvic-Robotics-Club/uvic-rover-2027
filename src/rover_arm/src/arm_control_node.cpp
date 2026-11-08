@@ -5,6 +5,10 @@
 #include "arm_hal.hpp"
 #include "sim_backend.hpp"
 #include "can_backend.hpp"
+#include "joint_limits.hpp"
+#include "ik_solver.hpp"
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include <memory>
 #include <string>
@@ -65,6 +69,54 @@ namespace rover_arm
                 }
 
                 // ================================
+                // IK Solver
+                // ================================
+                std::string urdf = "";
+                if (this->has_parameter("robot_description")) {
+                    urdf = this->get_parameter("robot_description").as_string();
+                } else {
+                    this->declare_parameter<std::string>("robot_description", "");
+                    urdf = this->get_parameter("robot_description").as_string();
+                }
+
+                // Load joint limits to pass into IK solver
+                auto joint_limits = rover_arm::load_joint_limits(this);
+
+                ik_solver_ = std::make_unique<IKSolver>(urdf, joint_limits, get_logger());
+
+                if (!ik_solver_->isReady())
+                {
+                    RCLCPP_WARN(
+                        get_logger(),
+                        "IKSolver failed to initialize — IK commands will be unavailable. "
+                        "Ensure robot_description is being passed to this node."
+                    );
+                } else {
+                    RCLCPP_INFO(
+                        get_logger(),
+                        "IKSolver ready — %u joints in chain",
+                        ik_solver_->getNumJoints()
+                    );
+                }
+
+                // /arm/ik_status - publishes IK solve result for operator feedback
+                ik_status_pub_ = this->create_publisher<std_msgs::msg::String>("/arm/ik_status", 10);
+
+                // /arm/joint_states feedback — store current positions for IK initial guess
+                joint_state_feedback_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
+                    "/arm/joint_states",
+                    10,
+                    std::bind(&ArmControlNode::on_joint_state_feedback, this, std::placeholders::_1)
+                );
+
+                // /arm/cmd_ik_pose — cartesian IK target from input sources
+                cmd_ik_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+                    "/arm/cmd_ik_pose",
+                    10,
+                    std::bind(&ArmControlNode::on_cmd_ik_pose, this, std::placeholders::_1)
+                );
+
+                // ================================
                 // Publishers
                 // ================================
                 // /arm/joint_states - feedback topic, published at fixed rate
@@ -73,6 +125,9 @@ namespace rover_arm
 
                 // /arm/healthy - simple bool indicating whether all motors are healthy
                 health_pub_ = this->create_publisher<std_msgs::msg::Bool>("/arm/healthy", 10);
+
+                // /arm/end_effector_pose - publishes FK result at the feedback rate
+                ee_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/arm/end_effector_pose", 10);
 
                 // ================================
                 // Subscribers
@@ -111,6 +166,12 @@ namespace rover_arm
                     backend_name.c_str(), 
                     publish_rate_hz
                 );
+
+                // IK interpolation timer — runs at same rate as feedback
+                ik_timer_ = this->create_wall_timer(
+                    period_ms,
+                    std::bind(&ArmControlNode::ik_interpolation_tick, this)
+                );
             }
 
         private:
@@ -137,6 +198,8 @@ namespace rover_arm
                     );
                     return;
                 }
+
+                cancel_ik_goal("cmd_joint");
 
                 // Match names from the message to joint IDs in the HAL
                 // This allows partial commands - e.g., commanding only the shoulder
@@ -179,6 +242,8 @@ namespace rover_arm
                     return;
                 }
 
+                cancel_ik_goal("cmd_joint_relative");
+
                 for (size_t i = 0; i < msg->name.size(); ++i)
                 {
                     int joint_id = get_joint_id_by_name(msg->name[i]);
@@ -195,6 +260,122 @@ namespace rover_arm
                         RCLCPP_ERROR(get_logger(), "HAL error on joint '%s': %s", msg->name[i].c_str(), e.what());
                     }
                 }
+            }
+
+            // A direct joint command overrides any IK goal in progress — otherwise
+            // ik_interpolation_tick() keeps re-commanding the joints and fights it
+            // (e.g. 'home' sent right after leaving jog mode).
+            void cancel_ik_goal(const char * reason)
+            {
+                if (!ik_goal_active_) return;
+                ik_goal_active_ = false;
+                ik_consecutive_failures_ = 0;
+                RCLCPP_INFO(get_logger(), "IK goal cancelled by %s", reason);
+            }
+
+            void on_joint_state_feedback(const sensor_msgs::msg::JointState::SharedPtr msg)
+            {
+                // Store current joint positions for use as IK initial guess
+                current_joint_positions_ = msg->position;
+            }
+
+            void on_cmd_ik_pose(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
+            {
+                ik_goal_ = *msg;
+                ik_goal_active_ = true;
+                // Each new goal gets its own failure budget
+                ik_consecutive_failures_ = 0;
+            }
+
+            // ================================
+            // Interpolation: For jog mode (terminal/controller)
+            // ================================
+            void ik_interpolation_tick()
+            {
+                if (!ik_goal_active_ || !ik_solver_->isReady()) return;
+
+                if (current_joint_positions_.size() != ArmHAL::NUM_JOINTS) return;
+
+                // Get current cartesian position via FK
+                std::vector<double> current_pos;
+                if (!ik_solver_->getCurrentPosition(current_joint_positions_, current_pos)) return;
+
+                // current_pos is [x, y, z]
+                double tx = ik_goal_.pose.position.x;
+                double ty = ik_goal_.pose.position.y;
+                double tz = ik_goal_.pose.position.z;
+
+                double dx = tx - current_pos[0];
+                double dy = ty - current_pos[1];
+                double dz = tz - current_pos[2];
+                double dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+
+                // If close enough, solve directly for goal
+                if (dist <= IK_MAX_STEP_M)
+                {
+                    if (dist < IK_GOAL_TOLERANCE_M) // already there, done
+                    {
+                        ik_goal_active_ = false;
+                        return;
+                    }
+                    // Once the final goal is solved and commanded, the goal is done.
+                    // The backend drives the joints the rest of the way, so there is
+                    // no need to keep re-solving every tick while it settles.
+                    if (solve_and_send(ik_goal_))
+                        ik_goal_active_ = false;
+                    return;
+                }
+
+                // Step toward goal by IK_MAX_STEP_M
+                double scale = IK_MAX_STEP_M / dist;
+                geometry_msgs::msg::PoseStamped step_target = ik_goal_;
+                step_target.pose.position.x = current_pos[0] + dx * scale;
+                step_target.pose.position.y = current_pos[1] + dy * scale;
+                step_target.pose.position.z = current_pos[2] + dz * scale;
+
+                solve_and_send(step_target);
+            }
+
+            // Returns true if IK succeeded and the joints were commanded.
+            bool solve_and_send(const geometry_msgs::msg::PoseStamped & target)
+            {
+                auto status_msg = std_msgs::msg::String();
+                std::vector<IKSolver::JointTarget> result_joints;
+                auto result = ik_solver_->solve(target, current_joint_positions_, result_joints);
+
+                if (result != IKSolver::Result::SUCCESS)
+                {
+                    ik_consecutive_failures_++;
+                    status_msg.data = std::string("IK failed: ") + IKSolver::resultToString(result);
+                    ik_status_pub_->publish(status_msg);
+
+                    if (ik_consecutive_failures_ >= IK_MAX_CONSECUTIVE_FAILURES)
+                    {
+                        RCLCPP_WARN(get_logger(),
+                            "IK failed %d consecutive times — deactivating goal.",
+                            ik_consecutive_failures_);
+                        ik_goal_active_ = false;
+                        ik_consecutive_failures_ = 0;
+                    }
+                    return false;
+                }
+
+                ik_consecutive_failures_ = 0;
+
+                // Command ONLY the joints IK moved — the others (wrist, hand) are
+                // operator-controlled and may be mid-motion
+                for (const auto & jt : result_joints)
+                {
+                    try {
+                        hal_->set_joint_command(static_cast<int>(jt.index), jt.position);
+                    } catch (const std::exception & e) {
+                        RCLCPP_ERROR(get_logger(), "HAL error on joint %u: %s", jt.index, e.what());
+                    }
+                }
+
+                status_msg.data = "IK OK";
+                ik_status_pub_->publish(status_msg);
+                return true;
             }
 
             // ================================
@@ -221,6 +402,23 @@ namespace rover_arm
                 {
                     RCLCPP_WARN(get_logger(), "Arm health check failed - check motor status");
                 }
+
+                // Publish current end effector pose for jog seeding
+                if (ik_solver_->isReady() && !current_joint_positions_.empty())
+                {
+                    std::vector<double> xyz;
+                    if (ik_solver_->getCurrentPosition(current_joint_positions_, xyz))
+                    {
+                        geometry_msgs::msg::PoseStamped ee_pose;
+                        ee_pose.header.stamp = now();
+                        ee_pose.header.frame_id = "base_link";
+                        ee_pose.pose.position.x = xyz[0];
+                        ee_pose.pose.position.y = xyz[1];
+                        ee_pose.pose.position.z = xyz[2];
+                        ee_pose.pose.orientation.w = 1.0;
+                        ee_pose_pub_->publish(ee_pose);
+                    }
+                }
             }
 
             // ================================
@@ -244,12 +442,27 @@ namespace rover_arm
             // ================================
             // Member variables
             // ================================
-
-            // HAL point - this is the only place the backend is referenced after init
             std::unique_ptr<ArmHAL> hal_;
+            std::unique_ptr<rover_arm::IKSolver> ik_solver_;
+
+            int ik_consecutive_failures_ = 0;
+            static constexpr int IK_MAX_CONSECUTIVE_FAILURES = 5;
+
+            std::vector<double> current_joint_positions_;
+
+            geometry_msgs::msg::PoseStamped ik_goal_;
+            bool ik_goal_active_ = false;
+            static constexpr double IK_MAX_STEP_M = 0.005;       // 5mm per tick at 20Hz
+            static constexpr double IK_GOAL_TOLERANCE_M = 0.001; // goal considered reached
+
+            rclcpp::TimerBase::SharedPtr ik_timer_;
             
+            rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr cmd_ik_pose_sub_;
+            rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_feedback_sub_;
+            rclcpp::Publisher<std_msgs::msg::String>::SharedPtr ik_status_pub_;
             rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
             rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr health_pub_;
+            rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr ee_pose_pub_;
             rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr cmd_joint_sub_;
             rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr cmd_joint_relative_sub_;
             rclcpp::TimerBase::SharedPtr feedback_timer_;

@@ -7,6 +7,8 @@
   - Added world link and world_to_base fixed joint
   - Set <axis xyz="1 0 0"/> on all joints (rotation axis in local joint frame)
   - Set joint limits and effort/velocity values
+  - Corrected wrist joint names (roll = twist about forearm, pitch = up/down bend)
+  - Re-zeroed wrist_pitch_joint so q=0 is the hand in line with the forearm
 -->
 <robot name="Rover_Arm">
 
@@ -239,8 +241,9 @@
       </geometry>
     </collision>
   </link>
+  <!-- Rotates about the forearm's long axis (twist). -->
   <joint
-    name="wrist_pitch_joint"
+    name="wrist_roll_joint"
     type="revolute">
     <origin
       xyz="0.045 -0.00026286 -0.054499"
@@ -285,16 +288,19 @@
       </geometry>
     </collision>
   </link>
+  <!-- Bends the hand up/down. Zero = hand in line with the forearm (upright at home).
+       Re-zeroed from the SolidWorks export: the original origin roll of -1.5708 had the
+       hand at 90 deg to the forearm at q=0, so +pi/2 was folded into the origin roll. -->
   <joint
-    name="wrist_roll_joint"
+    name="wrist_pitch_joint"
     type="revolute">
     <origin
       xyz="-0.221 -0.017793 -0.027793"
-      rpy="-1.5708 1.0013 -1.5708" />
+      rpy="0 1.0013 -1.5708" />
     <parent link="wrist" />
     <child link="hand" />
     <axis xyz="1 0 0" />
-    <limit lower="0" upper="3.1416" effort="10" velocity="1.0" />
+    <limit lower="-1.5708" upper="1.5708" effort="10" velocity="1.0" />
   </joint>
 
 
@@ -341,5 +347,29 @@
     <child link="end_effector" />
     <axis xyz="1 0 0" />
     <limit lower="-3.1416" upper="3.1416" effort="10" velocity="1.0" />
+  </joint>
+
+
+  <!-- Tool tip: the point IK positions. Massless marker link.
+       Located between the jaws ~1 cm behind the fingertips. Estimated from
+       Link_5.STL, whose fingertips end at x = -0.231 m in the end_effector
+       frame, centred on the hand roll axis (so hand_joint doesn't move it).
+       Adjust xyz here if it doesn't line up with the real gripper. -->
+  <material name="tool_tip_red">
+    <color rgba="1.0 0.1 0.1 1" />
+  </material>
+  <link name="tool_tip">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.006" />
+      </geometry>
+      <material name="tool_tip_red" />
+    </visual>
+  </link>
+  <joint name="tool_tip_joint" type="fixed">
+    <origin xyz="-0.22 0 0" rpy="0 0 0" />
+    <parent link="end_effector" />
+    <child link="tool_tip" />
   </joint>
 </robot>

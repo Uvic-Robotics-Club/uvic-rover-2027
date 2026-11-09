@@ -175,3 +175,21 @@ RUN if find src -name package.xml -print -quit | grep -q .; then \
 
 CMD ["bash"]
 
+
+
+#########################################################
+# ZED 2i Development Image (ROS 2 Jazzy + ZED SDK 5.5)
+#########################################################
+
+# Prebuilt using Stereolabs' zed-ros2-wrapper Docker scripts.
+# Desktop development only; Jetson requires an ARM64/JetPack image.
+FROM zed_ros2_desktop_jazzy_u24.04_sdk5.5_cuda12.8:latest AS zed-dev
+
+WORKDIR /rover_ws
+
+# Camera synchronization testing dependencies.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-numpy \
+    && rm -rf /var/lib/apt/lists/*
+
+CMD ["/bin/bash"]

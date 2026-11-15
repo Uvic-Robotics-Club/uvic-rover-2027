@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(rover_arm)
 
 # Enable strict warnings for C++
-if(CMAKE_COMPILER_IS_GNUXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-W -Wall -Wextra)
 endif()
 
@@ -141,6 +141,19 @@ if (BUILD_TESTING)
     rclcpp
     sensor_msgs
     std_msgs
+  )
+
+  # ik_solver tests
+  ament_add_gtest(test_ik_solver
+    test/test_ik_solver.cpp
+  )
+  target_link_libraries(test_ik_solver
+    arm_hal
+  )
+  ament_target_dependencies(test_ik_solver
+    rclcpp
+    geometry_msgs
+    ament_index_cpp
   )
 endif()
 

@@ -43,7 +43,7 @@ namespace rover_arm
             /**
              * Send a position command to a single joint.
              * @param joint_id  Joint index (use the constants above, e.g. JOINT_SHOULDER)
-             * @param value     Target position in radians (or metres for gripper)
+             * @param value     Target position in radians
              */
             virtual void set_joint_command(int joint_id, double value) = 0;
 

@@ -176,6 +176,7 @@ namespace rover_arm
         std::vector<double> & xyz_out)
     {
         if (!ready_) return false;
+        if (joint_positions.size() != chain_.getNrOfJoints()) return false;
 
         KDL::JntArray q(chain_.getNrOfJoints());
         for (unsigned int i = 0; i < chain_.getNrOfJoints(); ++i)

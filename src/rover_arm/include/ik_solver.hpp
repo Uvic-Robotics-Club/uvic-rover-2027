@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -94,7 +95,7 @@ namespace rover_arm
 
         /**
          * Run FK on given joint positions and return tool tip [x, y, z].
-         * Returns false if not ready.
+         * Returns false if not ready or joint_positions has the wrong size.
          */
         bool getCurrentPosition(
             const std::vector<double> & joint_positions,

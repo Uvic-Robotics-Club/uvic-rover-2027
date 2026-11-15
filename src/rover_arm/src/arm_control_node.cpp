@@ -404,7 +404,7 @@ namespace rover_arm
                 }
 
                 // Publish current end effector pose for jog seeding
-                if (ik_solver_->isReady() && !current_joint_positions_.empty())
+                if (ik_solver_->isReady() && current_joint_positions_.size() == ArmHAL::NUM_JOINTS)
                 {
                     std::vector<double> xyz;
                     if (ik_solver_->getCurrentPosition(current_joint_positions_, xyz))

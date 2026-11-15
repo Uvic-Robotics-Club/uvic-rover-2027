@@ -97,7 +97,7 @@ def find_config_path() -> Path:
 
 # Jog parameters
 JOG_RATE_HZ      = 10.0          # how often to publish while key is held
-JOG_STEP_DEFAULT = 0.002         # metres per publish (5mm)
+JOG_STEP_DEFAULT = 0.002         # metres per publish (2mm)
 JOG_STEP_MIN     = 0.001         # 1mm minimum step
 JOG_STEP_MAX     = 0.05          # 50mm maximum step
 JOG_STEP_INCREMENT = 0.001       # step change per [ or ] press
@@ -726,7 +726,6 @@ class TerminalInputNode(Node):
             return
 
         self.send_ik_command(x, y, z)
-        self.get_logger().info(f"IK command: x={x:.3f} y={y:.3f} z={z:.3f}")
 
 
 def main():

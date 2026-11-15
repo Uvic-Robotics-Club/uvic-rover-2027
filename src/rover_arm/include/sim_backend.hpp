@@ -53,7 +53,6 @@ namespace rover_arm
             std::unordered_map<std::string, JointLimit> limits_;
 
             static constexpr double TRAJ_TICK_HZ    = 50.0;
-            static constexpr double DEFAULT_DURATION = 2.0;  // seconds for full move
     };
 
 } // namespace rover_arm

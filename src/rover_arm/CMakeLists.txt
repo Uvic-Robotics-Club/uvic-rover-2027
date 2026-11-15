@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(rover_arm)
 
 # Enable strict warnings for C++
-if(CMAKE_COMPILER_IS_GNUXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-W -Wall -Wextra)
 endif()
 
@@ -19,6 +19,9 @@ find_package(std_msgs REQUIRED)
 find_package(tinyxml2_vendor REQUIRED)
 find_package(TinyXML2 REQUIRED)
 find_package(ament_index_cpp REQUIRED)
+find_package(kdl_parser REQUIRED)
+find_package(orocos_kdl_vendor REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 #=====================================
 # Include directories
@@ -35,6 +38,7 @@ add_library(arm_hal SHARED
   src/sim_backend.cpp
   src/can_backend.cpp
   src/joint_limits.cpp
+  src/ik_solver.cpp
 )
 
 # Link the HAL library against ROS2 and XML dependencies
@@ -43,6 +47,9 @@ ament_target_dependencies(arm_hal
   sensor_msgs
   std_msgs
   ament_index_cpp
+  kdl_parser
+  orocos_kdl_vendor
+  geometry_msgs
 )
 target_link_libraries(arm_hal
     tinyxml2
@@ -65,6 +72,7 @@ ament_target_dependencies(arm_control_node
   rclcpp
   sensor_msgs
   std_msgs
+  geometry_msgs
 )
 
 #=====================================
@@ -98,7 +106,7 @@ install(FILES urdf.rviz
 
 # Install Python scripts
 install(PROGRAMS
-  scripts/joint_cmd_cli.py
+  scripts/terminal_input_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -133,6 +141,19 @@ if (BUILD_TESTING)
     rclcpp
     sensor_msgs
     std_msgs
+  )
+
+  # ik_solver tests
+  ament_add_gtest(test_ik_solver
+    test/test_ik_solver.cpp
+  )
+  target_link_libraries(test_ik_solver
+    arm_hal
+  )
+  ament_target_dependencies(test_ik_solver
+    rclcpp
+    geometry_msgs
+    ament_index_cpp
   )
 endif()
 
